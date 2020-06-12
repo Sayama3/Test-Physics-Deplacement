@@ -10,7 +10,10 @@ public class Movement : MonoBehaviour
     [Title("Parameters")] 
     [SerializeField] private float speed = 1500f;
 
+    [SerializeField] private float directionChangementSpeed = 2f;
     [SerializeField] private float speedMax = 50f;
+    [SerializeField, Range(-1, 1)] private float sameDirection = 0.85f;
+
     
     [SerializeField, Range(0, 1)] private float reducteurTerrestre = 0.5f;
     [SerializeField, Range(0, 1)] private float  reducteurAerien = 0.2f; 
@@ -56,10 +59,12 @@ public class Movement : MonoBehaviour
         {
             upgradeDone = false;
         }
-
-        upgradeText.text = upgrade.ToString();
         
-        if ((Mathf.Abs(h) > limits || Mathf.Abs(v) > limits) && velocity.magnitude < speedMax*upgrade)
+        upgradeText.text = upgrade.ToString();
+        //Fin gestion upgrade
+        
+        //GEstion des mouveent
+        if ((Mathf.Abs(h) > limits || Mathf.Abs(v) > limits) )
         {
             //Vérifié que l'on ne dépasse pas le maximum voulu
             //Bonus : On a déjà indiquer la direction
@@ -72,8 +77,27 @@ public class Movement : MonoBehaviour
                 direction = direction.normalized;
             }
 
-            //On indique la forcé à appliquer au joueur
-            rb.AddForce(direction * (speed), forceMode);
+            bool sameDirection = (Vector3.Dot(velocity.normalized, direction.normalized) >= this.sameDirection) || velocity.magnitude <= 1;
+            bool speedIsntMax = velocity.magnitude < speedMax * upgrade;
+
+            if (sameDirection)
+            {
+                if (speedIsntMax)
+                {
+                    //On indique la forcé à appliquer au joueur
+                    rb.AddForce(direction * (speed), forceMode);
+                }
+            }
+            else 
+            {
+                var speed = velocity.magnitude;
+                velocity = velocity.normalized;
+                velocity += direction * (directionChangementSpeed * dt);
+                velocity = velocity.normalized * speed;
+                velocity.y = y;
+                rb.velocity = velocity;
+            }
+            
         }
         else
         {
@@ -92,7 +116,7 @@ public class Movement : MonoBehaviour
 
             Debug.Log("On utilise " + ((overlapSomething) ? "un reducteur terrestre" : "un reducteur aerien"));
             velocity = Vector3.MoveTowards(velocity, Vector3.zero,
-                ((overlapSomething) ? reducteurTerrestre : reducteurAerien) * (speed));
+                ((overlapSomething) ? reducteurTerrestre : reducteurAerien) * (velocity.magnitude));
             
             velocity.y = y;
             rb.velocity = velocity;
