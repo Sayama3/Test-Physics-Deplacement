@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Movement : MonoBehaviour
 {
@@ -16,6 +17,11 @@ public class Movement : MonoBehaviour
     
     [SerializeField] private ForceMode forceMode = ForceMode.Force;
     [SerializeField, Range(0, 1)] private float limits = 0.5f;
+    private int upgrade = 1;
+    [Title("Other")]
+    [SerializeField] private Text upgradeText;
+
+    private bool upgradeDone;
     private Rigidbody rb;
 
     private void Start()
@@ -32,7 +38,28 @@ public class Movement : MonoBehaviour
         var velocity = rb.velocity;
         var y = velocity.y;
         velocity.y = 0;
-        if ((Mathf.Abs(h) > limits || Mathf.Abs(v) > limits) && velocity.magnitude < speedMax)
+        
+        //Gestion des Upgrade
+        var upgrd = Input.GetAxis("Upgrade");
+        if (Mathf.Abs(upgrd) >limits)
+        {
+            if (!upgradeDone)
+            {
+                upgradeDone = true;
+                var sign = Mathf.Sign(upgrd);
+                upgrade += (int) sign;
+                upgrade = Mathf.Clamp(upgrade, 1, 5);
+            }
+
+        }
+        else
+        {
+            upgradeDone = false;
+        }
+
+        upgradeText.text = upgrade.ToString();
+        
+        if ((Mathf.Abs(h) > limits || Mathf.Abs(v) > limits) && velocity.magnitude < speedMax*upgrade)
         {
             //Vérifié que l'on ne dépasse pas le maximum voulu
             //Bonus : On a déjà indiquer la direction
